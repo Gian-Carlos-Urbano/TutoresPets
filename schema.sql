@@ -1,0 +1,25 @@
+CREATE DATABASE IF NOT EXISTS tutores_pets
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE tutores_pets;
+
+CREATE TABLE IF NOT EXISTS tutores (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(120) NOT NULL UNIQUE,
+    telefone VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS pets (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    especie VARCHAR(50) NOT NULL,
+    raca VARCHAR(80) NOT NULL,
+    idade INT UNSIGNED NOT NULL,
+    tutor_id INT UNSIGNED NOT NULL,
+    CONSTRAINT fk_pets_tutores
+        FOREIGN KEY (tutor_id) REFERENCES tutores(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
