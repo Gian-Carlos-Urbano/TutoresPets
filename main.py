@@ -1,12 +1,12 @@
 import logging
 
-from fastapi import FastAPI, HTTPException, Path, Query, Request, Response
+from fastapi import FastAPI, HTTPException, Path, Request
 from fastapi.responses import JSONResponse
 from mysql.connector import Error as MySQLError
 
 from database import executar_sql
 
-app = FastAPI(title="API de produtos — Aula 1")
+app = FastAPI(title="API de Tutores e Pets")
 
 
 @app.exception_handler(MySQLError)
@@ -18,20 +18,82 @@ def erro_de_banco(request: Request, exc: MySQLError):
     )
 
 
-def representar_produto(produto):
+def representar_tutor(tutor):
     return {
-        "id": produto["id"],
-        "nome": produto["nome"],
-        "categoria": produto["categoria"],
-        "preco": format(produto["preco"], ".2f"),
+        "id": tutor["id"],
+        "nome": tutor["nome"],
+        "email": tutor["email"],
+        "telefone": tutor["telefone"],
     }
 
-@app.get("/produtos")
-def listar_produtos():
-    sql = "SELECT id, nome, categoria, preco FROM produtos ORDER BY id"
-    produtos = executar_sql(sql)
+
+def representar_pet(pet):
+    return {
+        "id": pet["id"],
+        "nome": pet["nome"],
+        "especie": pet["especie"],
+        "raca": pet["raca"],
+        "idade": pet["idade"],
+        "tutor_id": pet["tutor_id"],
+    }
+
+
+@app.get("/tutores")
+def listar_tutores():
+    sql = "SELECT id, nome, email, telefone FROM tutores ORDER BY id"
+    tutores = executar_sql(sql)
 
     return {
-        "dados": [representar_produto(produto) for produto in produtos],
+        "dados": [representar_tutor(tutor) for tutor in tutores],
         "sintaxesql": {"sql": sql, "parametros": []},
+    }
+
+
+@app.get("/pets")
+def listar_pets():
+    sql = (
+        "SELECT id, nome, especie, raca, idade, tutor_id "
+        "FROM pets ORDER BY id"
+    )
+    pets = executar_sql(sql)
+
+    return {
+        "dados": [representar_pet(pet) for pet in pets],
+        "sintaxesql": {"sql": sql, "parametros": []},
+    }
+
+
+@app.get("/tutores/{tutor_id}")
+def consultar_tutor(tutor_id: int = Path(..., gt=0)):
+    sql = (
+        "SELECT id, nome, email, telefone "
+        "FROM tutores WHERE id = %s"
+    )
+    parametros = (tutor_id,)
+    tutores = executar_sql(sql, parametros)
+
+    if not tutores:
+        raise HTTPException(status_code=404, detail="Tutor não encontrado.")
+
+    return {
+        "dados": representar_tutor(tutores[0]),
+        "sintaxesql": {"sql": sql, "parametros": parametros},
+    }
+
+
+@app.get("/pets/{pet_id}")
+def consultar_pet(pet_id: int = Path(..., gt=0)):
+    sql = (
+        "SELECT id, nome, especie, raca, idade, tutor_id "
+        "FROM pets WHERE id = %s"
+    )
+    parametros = (pet_id,)
+    pets = executar_sql(sql, parametros)
+
+    if not pets:
+        raise HTTPException(status_code=404, detail="Pet não encontrado.")
+
+    return {
+        "dados": representar_pet(pets[0]),
+        "sintaxesql": {"sql": sql, "parametros": parametros},
     }
